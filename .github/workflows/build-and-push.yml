@@ -60,7 +60,7 @@ jobs:
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image1 -f .github/workflows/Dockerfile .
 
           # Push the image to ACR
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image1
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image2
 
       # Step 8: Build and Push Image 2 with Provenance Attestation
       - name: Build and Push Image 2 with Provenance
