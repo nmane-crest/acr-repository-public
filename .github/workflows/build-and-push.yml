@@ -1,0 +1,77 @@
+name: Build and Push Images to ACR
+
+on: 
+  push:
+    branches:
+      - main  # specify the branch to trigger the workflow
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code (ensure the code is pulled before proceeding)
+      - name: Checkout code
+        uses: actions/checkout@v2  # This is critical to ensure the repo is available
+
+      # Step 2: Azure Login using OIDC
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          
+
+      # Step 3: Verify Azure CLI Login
+      - name: Verify Azure CLI Login
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
+
+      # Step 4: Log in to Azure Container Registry
+      - name: Log in to ACR
+        run: |
+          az acr login --name ${{ secrets.ACR_NAME }}
+
+      # Step 5: List contents of .github/workflows/ (Debugging Step)
+      - name: List contents of .github/workflows/
+        run: |
+          ls -la .github/workflows/  # Confirm if Dockerfile exists
+
+      # Step 6: Check Dockerfile content (Debugging step)
+      - name: Check Dockerfile Content
+        run: |
+          cat .github/workflows/Dockerfile  # Correct path to the Dockerfile
+
+      # Step 7: Build and Push Image 1 with OCI Labels
+      - name: Build and Push Image 1 with OCI Labels
+        run: |
+          # Dynamically add OCI label to Dockerfile
+          echo "LABEL org.opencontainers.image.source=${{ secrets.REPO_URL }}" >> .github/workflows/Dockerfile
+
+          # Build the Docker image, making sure the context is the root of the repo
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image1 -f .github/workflows/Dockerfile .
+
+          # Push the image to ACR
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image1
+
+      # Step 8: Build and Push Image 2 with Provenance Attestation
+      - name: Build and Push Image 2 with Provenance
+        run: |
+          # Install Buildx if not already installed
+          docker buildx create --use  # Use default driver (docker)
+
+          # Build and push the image with provenance
+          docker buildx build \
+            --provenance=true \
+            --platform linux/amd64 \
+            --tag ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-integration-test:image2 \
+            -f .github/workflows/Dockerfile \
+            --push .
