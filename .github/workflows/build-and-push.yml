@@ -57,10 +57,10 @@ jobs:
           echo "LABEL org.opencontainers.image.source=${{ secrets.REPO_URL }}" >> .github/workflows/Dockerfile
 
           # Build the Docker image, making sure the context is the root of the repo
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image1 -f .github/workflows/Dockerfile .
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:v1 -f .github/workflows/Dockerfile .
 
           # Push the image to ACR
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:image2
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:v1
 
       # Step 8: Build and Push Image 2 with Provenance Attestation
       - name: Build and Push Image 2 with Provenance
@@ -72,6 +72,6 @@ jobs:
           docker buildx build \
             --provenance=true \
             --platform linux/amd64 \
-            --tag ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-integration-test:image2 \
+            --tag ${{ secrets.ACR_LOGIN_SERVER }}/nmane-crest/acr-repository-public:v2 \
             -f .github/workflows/Dockerfile \
             --push .
